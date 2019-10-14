@@ -1,4 +1,4 @@
-module k8seventwatcher
+module github.com/cmaster11/k8s-event-watcher
 
 go 1.13
 

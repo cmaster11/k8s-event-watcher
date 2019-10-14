@@ -1,6 +1,7 @@
 package k8seventwatcher
 
 import (
+	"github.com/cmaster11/k8s-event-watcher/internal"
 	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
@@ -12,7 +13,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8seventwatcher/internal"
 	"log"
 	"sync"
 	"time"
