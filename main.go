@@ -27,7 +27,7 @@ type K8sEventWatcher struct {
 
 	chStop   chan struct{}
 	lock     sync.Mutex
-	callback func(event *v1.Event)
+	callback func(event *v1.Event, filterDescription string)
 
 	Debug bool
 }
@@ -108,17 +108,16 @@ func (w *K8sEventWatcher) onAddEvent(obj interface{}) {
 		return
 	}
 
-	if !w.config.MatchesEvent(evt) {
-		w.logEntryDebug("discarded event: %+v", evt)
+	if filter := w.config.MatchingEventFilter(evt); filter != nil {
+		w.logEntryDebug("matched event: %+v", evt)
+		w.callback(evt, filter.String())
 		return
 	}
 
-	w.logEntryDebug("matched event: %+v", evt)
-
-	w.callback(evt)
+	w.logEntryDebug("discarded event: %+v", evt)
 }
 
-func (w *K8sEventWatcher) Start(callback func(event *v1.Event)) error {
+func (w *K8sEventWatcher) Start(callback func(event *v1.Event, filterDescription string)) error {
 	if callback == nil {
 		return errorf("callback cannot be null")
 	}

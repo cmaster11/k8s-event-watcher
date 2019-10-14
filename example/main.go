@@ -26,8 +26,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := watcher.Start(func(event *v1.Event) {
-		log.Printf("got event: %+v\n", event)
+	if err := watcher.Start(func(event *v1.Event, filterDescription string) {
+		log.Printf("got event (%s): %+v\n", filterDescription, event)
 	}); err != nil {
 		log.Fatal(err)
 	}

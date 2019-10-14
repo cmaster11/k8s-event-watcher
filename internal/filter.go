@@ -2,7 +2,9 @@ package internal
 
 import (
 	"errors"
+	"fmt"
 	v1 "k8s.io/api/core/v1"
+	"strings"
 )
 
 type EventFilter struct {
@@ -61,4 +63,25 @@ func (f *EventFilter) Matches(event *v1.Event) bool {
 	}
 
 	return true
+}
+
+func (f *EventFilter) String() string {
+	var elements []string
+	if f.ObjectNamespace != nil {
+		elements = append(elements, fmt.Sprintf("objectNamespace=%s", f.ObjectNamespace.String()))
+	}
+	if f.ObjectKind != nil {
+		elements = append(elements, fmt.Sprintf("objectKind=%s", f.ObjectKind.String()))
+	}
+	if f.ObjectName != nil {
+		elements = append(elements, fmt.Sprintf("objectName=%s", f.ObjectName.String()))
+	}
+	if f.EventType != nil {
+		elements = append(elements, fmt.Sprintf("eventType=%s", f.EventType.String()))
+	}
+	if f.EventReason != nil {
+		elements = append(elements, fmt.Sprintf("eventReason=%s", f.EventReason.String()))
+	}
+
+	return strings.Join(elements, ",")
 }

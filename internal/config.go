@@ -28,14 +28,14 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func (c *Config) MatchesEvent(event *v1.Event) bool {
+func (c *Config) MatchingEventFilter(event *v1.Event) *EventFilter {
 	for _, filter := range c.Filters {
 		if filter.Matches(event) {
-			return true
+			return filter
 		}
 	}
 
-	return false
+	return nil
 }
 
 func (c *Config) Dump() string {
