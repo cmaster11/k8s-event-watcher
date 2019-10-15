@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/cmaster11/k8s-event-watcher"
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"log"
 	"os"
@@ -26,8 +26,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := watcher.Start(func(event *v1.Event, filterDescription string) {
-		log.Printf("got event (%s): %+v\n", filterDescription, event)
+	if err := watcher.Start(func(event *v1.Event, eventFilter *k8seventwatcher.EventFilter) {
+		log.Printf("got event (%s): %+v\n", eventFilter.String(), event)
 	}); err != nil {
 		log.Fatal(err)
 	}

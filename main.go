@@ -1,11 +1,10 @@
 package k8seventwatcher
 
 import (
-	"github.com/cmaster11/k8s-event-watcher/internal"
 	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -19,7 +18,7 @@ import (
 )
 
 type K8sEventWatcher struct {
-	config     *internal.Config
+	config     *Config
 	launchTime v12.Time
 	logger     *log.Logger
 
@@ -27,15 +26,15 @@ type K8sEventWatcher struct {
 
 	chStop   chan struct{}
 	lock     sync.Mutex
-	callback func(event *v1.Event, filterDescription string)
+	callback func(event *v1.Event, eventFilter *EventFilter)
 
 	Debug bool
 }
 
 func NewK8sEventWatcher(
-// Config path of event watcher
+	// Config path of event watcher
 	configPath string,
-// Config path for k8s cluster, can be empty
+	// Config path for k8s cluster, can be empty
 	kubeConfigPath *string,
 	logWriter io.Writer,
 ) (*K8sEventWatcher, error) {
@@ -48,7 +47,7 @@ func NewK8sEventWatcher(
 		return nil, errorf("failed to read Config file: %v", err)
 	}
 
-	config := &internal.Config{}
+	config := &Config{}
 	err = yaml.Unmarshal(configData, config)
 	if err != nil {
 		return nil, errorf("failed to unmarshal Config: %v", err)
@@ -90,7 +89,7 @@ func NewK8sEventWatcher(
 
 	evtInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: watcher.onAddEvent,
-	}, )
+	})
 
 	return watcher, nil
 }
@@ -110,14 +109,14 @@ func (w *K8sEventWatcher) onAddEvent(obj interface{}) {
 
 	if filter := w.config.MatchingEventFilter(evt); filter != nil {
 		w.logEntryDebug("matched event: %+v", evt)
-		w.callback(evt, filter.String())
+		w.callback(evt, filter)
 		return
 	}
 
 	w.logEntryDebug("discarded event: %+v", evt)
 }
 
-func (w *K8sEventWatcher) Start(callback func(event *v1.Event, filterDescription string)) error {
+func (w *K8sEventWatcher) Start(callback func(event *v1.Event, eventFilter *EventFilter)) error {
 	if callback == nil {
 		return errorf("callback cannot be null")
 	}

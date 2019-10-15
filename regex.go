@@ -1,4 +1,4 @@
-package internal
+package k8seventwatcher
 
 import "regexp"
 

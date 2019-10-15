@@ -1,9 +1,9 @@
-package internal
+package k8seventwatcher
 
 import (
 	"errors"
 	"gopkg.in/yaml.v2"
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 	"log"
 )
 

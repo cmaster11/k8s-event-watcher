@@ -1,9 +1,9 @@
-package internal
+package k8seventwatcher
 
 import (
 	"errors"
 	"fmt"
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 	"strings"
 )
 

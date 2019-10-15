@@ -1,4 +1,4 @@
 sinceNow: true
 filters:
-  - objectKind: Job
-    eventReason: BackoffLimitExceeded
+- objectKind: Job
+  eventReason: BackoffLimitExceeded
