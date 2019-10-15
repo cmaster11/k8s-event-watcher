@@ -85,3 +85,24 @@ func (f *EventFilter) String() string {
 
 	return strings.Join(elements, ",")
 }
+
+func (f *EventFilter) StringShort() string {
+	var elements []string
+	if f.EventReason != nil {
+		elements = append(elements, fmt.Sprintf("reason=%s", f.EventReason.String()))
+	}
+	if f.EventType != nil {
+		elements = append(elements, fmt.Sprintf("evtType=%s", f.EventType.String()))
+	}
+	if f.ObjectNamespace != nil {
+		elements = append(elements, fmt.Sprintf("objNS=%s", f.ObjectNamespace.String()))
+	}
+	if f.ObjectKind != nil {
+		elements = append(elements, fmt.Sprintf("objKind=%s", f.ObjectKind.String()))
+	}
+	if f.ObjectName != nil {
+		elements = append(elements, fmt.Sprintf("objName=%s", f.ObjectName.String()))
+	}
+
+	return strings.Join(elements, ",")
+}
