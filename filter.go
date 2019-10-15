@@ -3,6 +3,7 @@ package k8seventwatcher
 import (
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"k8s.io/api/core/v1"
 	"strings"
 )
@@ -105,4 +106,9 @@ func (f *EventFilter) StringShort() string {
 	}
 
 	return strings.Join(elements, ",")
+}
+
+func (f *EventFilter) ToYAML() string {
+	output, _ := yaml.Marshal(f)
+	return string(output)
 }
