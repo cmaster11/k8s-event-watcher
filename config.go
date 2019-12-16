@@ -3,7 +3,6 @@ package k8seventwatcher
 import (
 	"errors"
 	"gopkg.in/yaml.v2"
-	"k8s.io/api/core/v1"
 	"log"
 )
 
@@ -28,14 +27,18 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func (c *Config) MatchingEventFilter(event *v1.Event) *EventFilter {
+func (c *Config) MatchingEventFilter(event map[string]interface{}) (*EventFilter, error) {
 	for _, filter := range c.Filters {
-		if filter.Matches(event) {
-			return filter
+		matches, err := filter.Matches(event)
+		if err != nil {
+			return nil, errorf("error matching filter: %s", err)
+		}
+		if matches {
+			return filter, nil
 		}
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (c *Config) Dump() string {

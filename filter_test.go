@@ -8,17 +8,22 @@ import (
 
 func TestEventFilter(t *testing.T) {
 	input := `
-objectKind: Job
-objectNamespace: default
-objectName: test.*
-eventType: Warning
-eventReason: BackoffLimitExceeded
+rules:
+  involvedObject.kind: Job
+  involvedObject.namespace: default
+  involvedObject.name: test.*
+  type: Warning
+  reason: BackoffLimitExceeded
 `
 
 	filter := &EventFilter{}
 
 	if err := yaml.Unmarshal([]byte(input), filter); err != nil {
 		t.Fatal(err)
+	}
+
+	if err := filter.Validate(); err != nil {
+		t.Fatalf("invalid rules: %s", err)
 	}
 
 	evt := v1.Event{}
@@ -30,8 +35,18 @@ eventReason: BackoffLimitExceeded
 	evt.Type = "Warning"
 	evt.Reason = "BackoffLimitExceeded"
 
-	if !filter.Matches(&evt) {
-		t.Fatal("expected match")
+	// Marshal to JSON
+	obj, err := eventToMap(&evt)
+	if err != nil {
+		t.Fatalf("failed to cast event to map: %s", err)
+	}
+
+	match, err := filter.Matches(obj)
+	if err != nil {
+		t.Fatalf("match error: %s", err)
+	}
+	if !match {
+		t.Fatalf("no match")
 	}
 
 	output := filter.ToYAML()
@@ -43,19 +58,19 @@ eventReason: BackoffLimitExceeded
 		t.Fatal(err)
 	}
 
-	if filter2.EventReason.String() != filter.EventReason.String() {
-		t.Fatal("wrong EventReason")
-	}
-	if filter2.EventType.String() != filter.EventType.String() {
-		t.Fatal("wrong EventType")
-	}
-	if filter2.ObjectKind.String() != filter.ObjectKind.String() {
-		t.Fatal("wrong ObjectKind")
-	}
-	if filter2.ObjectName.String() != filter.ObjectName.String() {
-		t.Fatal("wrong ObjectName")
-	}
-	if filter2.ObjectNamespace.String() != filter.ObjectNamespace.String() {
-		t.Fatal("wrong ObjectNamespace")
+	// Test marshal to string
+	for path, regex := range filter.Rules {
+		found := false
+		for path2, regex2 := range filter2.Rules {
+			if path == path2 {
+				found = true
+				if regex.String() != regex2.String() {
+					t.Fatalf("wrong regex for %s", path)
+				}
+			}
+		}
+		if !found {
+			t.Fatalf("path %s not found", path)
+		}
 	}
 }

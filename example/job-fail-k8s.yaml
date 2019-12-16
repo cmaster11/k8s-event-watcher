@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-fail
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      containers:
+        - command:
+            - sh
+            - exit
+            - "1"
+          image: alpine
+          name: main
+      restartPolicy: Never
+      terminationGracePeriodSeconds: 30
