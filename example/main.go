@@ -12,8 +12,8 @@ import (
 )
 
 func main() {
-	kubeConfigPath := flag.String("kubeconfig", "", "path of k8s k8sConfig file to use")
-	configPath := flag.String("config", "config.yaml", "path of k8sConfig file to use")
+	kubeConfigPath := flag.String("kubeconfig", "", "path of kubeconfig file to use")
+	configPath := flag.String("config", "config.yaml", "path of event watcher config file to use")
 
 	flag.Parse()
 

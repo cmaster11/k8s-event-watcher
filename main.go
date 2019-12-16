@@ -107,7 +107,19 @@ func (w *K8sEventWatcher) onAddEvent(obj interface{}) {
 		return
 	}
 
-	if filter := w.config.MatchingEventFilter(evt); filter != nil {
+	// Convert the event to a map
+	outMap, err := eventToMap(evt)
+	if err != nil {
+		w.logEntryError("failed to cast event to map: %+v", err)
+		return
+	}
+
+	filter, err := w.config.MatchingEventFilter(outMap)
+	if err != nil {
+		w.logEntryError("failed to find matching event filter: %+v", err)
+		return
+	}
+	if filter != nil {
 		w.logEntryDebug("matched event: %+v", evt)
 		w.callback(evt, filter)
 		return

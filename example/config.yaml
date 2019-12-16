@@ -1,0 +1,6 @@
+sinceNow: true
+filters:
+- rules:
+    involvedObject.kind: Job
+    involvedObject.name: "^*.fail"
+    reason: BackoffLimitExceeded
