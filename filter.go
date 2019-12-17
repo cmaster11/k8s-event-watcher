@@ -20,20 +20,23 @@ func (f *EventFilter) Validate() error {
 	return errors.New("no rules provided")
 }
 
-func (f *EventFilter) Matches(event map[string]interface{}) (bool, error) {
+func (f *EventFilter) Matches(event map[string]interface{}) (map[string]interface{}, error) {
+	matchedFields := make(map[string]interface{})
 	for path, regex := range f.Rules {
 		value, err := lookup.LookupString(event, path)
 		if err != nil {
-			return false, errorf("lookup error: %s", err)
+			return nil, errorf("lookup error: %s", err)
 		}
 
 		valueStr := fmt.Sprintf("%v", value.Interface())
 		if !regex.MatchString(valueStr) {
-			return false, nil
+			return nil, nil
 		}
+
+		matchedFields[path] = valueStr
 	}
 
-	return true, nil
+	return matchedFields, nil
 }
 
 func (f *EventFilter) String() string {

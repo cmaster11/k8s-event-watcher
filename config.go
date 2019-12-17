@@ -2,8 +2,9 @@ package k8seventwatcher
 
 import (
 	"errors"
-	"gopkg.in/yaml.v2"
 	"log"
+
+	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
@@ -27,18 +28,18 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func (c *Config) MatchingEventFilter(event map[string]interface{}) (*EventFilter, error) {
+func (c *Config) MatchingEventFilter(event map[string]interface{}) (*EventFilter, map[string]interface{}, error) {
 	for _, filter := range c.Filters {
-		matches, err := filter.Matches(event)
+		matchedFields, err := filter.Matches(event)
 		if err != nil {
-			return nil, errorf("error matching filter: %s", err)
+			return nil, nil, errorf("error matching filter: %s", err)
 		}
-		if matches {
-			return filter, nil
+		if matchedFields != nil {
+			return filter, matchedFields, nil
 		}
 	}
 
-	return nil, nil
+	return nil, nil, nil
 }
 
 func (c *Config) Dump() string {

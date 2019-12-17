@@ -41,12 +41,15 @@ rules:
 		t.Fatalf("failed to cast event to map: %s", err)
 	}
 
-	match, err := filter.Matches(obj)
+	matchedFields, err := filter.Matches(obj)
 	if err != nil {
 		t.Fatalf("match error: %s", err)
 	}
-	if !match {
+	if matchedFields == nil {
 		t.Fatalf("no match")
+	}
+	if matchedFields["involvedObject.name"] != evt.InvolvedObject.Name {
+		t.Fatalf("bad matched field")
 	}
 
 	output := filter.ToYAML()

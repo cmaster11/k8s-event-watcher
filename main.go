@@ -1,9 +1,13 @@
 package k8seventwatcher
 
 import (
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
+	"log"
+	"sync"
+	"time"
+
+	"gopkg.in/yaml.v2"
 	"k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
@@ -12,9 +16,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
-	"log"
-	"sync"
-	"time"
 )
 
 type K8sEventWatcher struct {
@@ -26,15 +27,15 @@ type K8sEventWatcher struct {
 
 	chStop   chan struct{}
 	lock     sync.Mutex
-	callback func(event *v1.Event, eventFilter *EventFilter)
+	callback func(event *v1.Event, eventFilter *EventFilter, matchedFields map[string]interface{})
 
 	Debug bool
 }
 
 func NewK8sEventWatcher(
-	// Config path of event watcher
+// Config path of event watcher
 	configPath string,
-	// Config path for k8s cluster, can be empty
+// Config path for k8s cluster, can be empty
 	kubeConfigPath *string,
 	logWriter io.Writer,
 ) (*K8sEventWatcher, error) {
@@ -114,21 +115,21 @@ func (w *K8sEventWatcher) onAddEvent(obj interface{}) {
 		return
 	}
 
-	filter, err := w.config.MatchingEventFilter(outMap)
+	filter, matchedFields, err := w.config.MatchingEventFilter(outMap)
 	if err != nil {
 		w.logEntryError("failed to find matching event filter: %+v", err)
 		return
 	}
 	if filter != nil {
 		w.logEntryDebug("matched event: %+v", evt)
-		w.callback(evt, filter)
+		w.callback(evt, filter, matchedFields)
 		return
 	}
 
 	w.logEntryDebug("discarded event: %+v", evt)
 }
 
-func (w *K8sEventWatcher) Start(callback func(event *v1.Event, eventFilter *EventFilter)) error {
+func (w *K8sEventWatcher) Start(callback func(event *v1.Event, eventFilter *EventFilter, matchedFields map[string]interface{})) error {
 	if callback == nil {
 		return errorf("callback cannot be null")
 	}
