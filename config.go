@@ -1,7 +1,6 @@
 package k8seventwatcher
 
 import (
-	"errors"
 	"log"
 
 	"gopkg.in/yaml.v2"
@@ -15,9 +14,10 @@ type Config struct {
 }
 
 func (c *Config) Validate() error {
-	if len(c.Filters) == 0 {
-		return errors.New("zero filters provided")
-	}
+	// Technically, we may want to process ALL k8s events
+	// if len(c.Filters) == 0 {
+	// 	return errors.New("zero filters provided")
+	// }
 
 	for _, filter := range c.Filters {
 		if err := filter.Validate(); err != nil {
@@ -45,7 +45,7 @@ func (c *Config) MatchingEventFilter(event map[string]interface{}) (*EventFilter
 func (c *Config) Dump() string {
 	data, err := yaml.Marshal(c)
 	if err != nil {
-		log.Fatalf("failed to dump Config: %+v", c)
+		log.Fatalf("failed to dump config: %+v", c)
 	}
 
 	return string(data)

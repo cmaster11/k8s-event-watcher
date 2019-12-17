@@ -33,9 +33,9 @@ type K8sEventWatcher struct {
 }
 
 func NewK8sEventWatcher(
-// Config path of event watcher
+	// Config path of event watcher
 	configPath string,
-// Config path for k8s cluster, can be empty
+	// Config path for k8s cluster, can be empty
 	kubeConfigPath *string,
 	logWriter io.Writer,
 ) (*K8sEventWatcher, error) {
@@ -45,13 +45,17 @@ func NewK8sEventWatcher(
 
 	configData, err := ioutil.ReadFile(configPath)
 	if err != nil {
-		return nil, errorf("failed to read Config file: %v", err)
+		return nil, errorf("failed to read config file: %v", err)
 	}
 
 	config := &Config{}
 	err = yaml.Unmarshal(configData, config)
 	if err != nil {
-		return nil, errorf("failed to unmarshal Config: %v", err)
+		return nil, errorf("failed to unmarshal config: %v", err)
+	}
+
+	if err := config.Validate(); err != nil {
+		return nil, errorf("invalid config: %v", err)
 	}
 
 	var k8sConfig *rest.Config
@@ -146,7 +150,7 @@ func (w *K8sEventWatcher) Start(callback func(event *v1.Event, eventFilter *Even
 
 	go w.kubeInformerFactory.Start(w.chStop)
 
-	w.logEntryInfo("started (%s) with Config:\n%s", w.launchTime.String(), w.config.Dump())
+	w.logEntryInfo("started (%s) with config:\n%s", w.launchTime.String(), w.config.Dump())
 
 	return nil
 }

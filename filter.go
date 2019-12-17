@@ -3,9 +3,10 @@ package k8seventwatcher
 import (
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/cmaster11/k8s-event-watcher/lookup"
 	"gopkg.in/yaml.v2"
-	"strings"
 )
 
 type EventFilter struct {
@@ -13,11 +14,12 @@ type EventFilter struct {
 }
 
 func (f *EventFilter) Validate() error {
-	// At least one filter must exist
-	if len(f.Rules) > 0 {
-		return nil
+	// At least one rule must exist, once a filter is defined
+	if len(f.Rules) == 0 {
+		return errors.New("no rules provided")
 	}
-	return errors.New("no rules provided")
+
+	return nil
 }
 
 func (f *EventFilter) Matches(event map[string]interface{}) (map[string]interface{}, error) {
