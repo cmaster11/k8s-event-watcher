@@ -4,3 +4,6 @@ filters:
     involvedObject.kind: Job
     involvedObject.name: "^*.fail"
     reason: BackoffLimitExceeded
+  errorRules:
+    # In this specific case, we want to mark this event ALWAYS as an error
+    type: .*

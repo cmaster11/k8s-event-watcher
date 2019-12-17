@@ -11,6 +11,9 @@ filters:
     involvedObject.kind: Job
     involvedObject.name: "^*.fail"
     reason: BackoffLimitExceeded
+  errorRules:
+    # Always mark this event as an error
+    type: .*
 ```
 
 This would match a `Job`-failed `Event`:
@@ -41,7 +44,11 @@ Configurable keys:
 * `filters`: a list of `rules`. Each `rules` object is evaluated **independently**, in an `OR` fashion. Any event is
     evaluated on all sets of `rules`. The first matching filter will cause the trigger of the callback. 
 * `filters.[*].rules`: a map of regular expressions. Each regular expression is evaluated against the provided object key.
-    If **all** the regular expressions match, then the event will be sent to the callback. 
+    If **all** the regular expressions match, then the event will be sent to the callback, and the `MatchedFields` 
+    map will be populated with the matching fields.
+* `filters.[*].errorRules`: a map of regular expressions. Each regular expression is evaluated against the provided object key.
+    If **all** the regular expressions match, then the event will be considered an error, and the `MatchedErrorFields` 
+    map will be populated with the matching error fields.
 
 ## Local test
 

@@ -27,8 +27,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := watcher.Start(func(event *v1.Event, eventFilter *k8seventwatcher.EventFilter, matchedFields map[string]interface{}) {
-		log.Printf("got event (%s):\nmatchedFields: %+v\nevent: %+v\n", eventFilter.String(), matchedFields, event)
+	if err := watcher.Start(func(event *v1.Event, eventFilter *k8seventwatcher.EventFilter, matchResult *k8seventwatcher.MatchResult) {
+		log.Printf("got event (%s):\nmatchResult: %+v\nevent: %+v\n", eventFilter.String(), matchResult, event)
 	}); err != nil {
 		log.Fatal(err)
 	}

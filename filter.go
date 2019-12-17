@@ -10,7 +10,12 @@ import (
 )
 
 type EventFilter struct {
+
+	// Rules used to match the event
 	Rules map[string]*Regexp `yaml:"rules"`
+
+	// If all these rules match, the event is considered an Overseer error
+	ErrorRules map[string]*Regexp `yaml:"errorRules"`
 }
 
 func (f *EventFilter) Validate() error {
@@ -22,7 +27,12 @@ func (f *EventFilter) Validate() error {
 	return nil
 }
 
-func (f *EventFilter) Matches(event map[string]interface{}) (map[string]interface{}, error) {
+type MatchResult struct {
+	MatchedFields      map[string]interface{}
+	MatchedErrorFields map[string]interface{}
+}
+
+func (f *EventFilter) Matches(event map[string]interface{}) (*MatchResult, error) {
 	matchedFields := make(map[string]interface{})
 	for path, regex := range f.Rules {
 		value, err := lookup.LookupString(event, path)
@@ -38,7 +48,26 @@ func (f *EventFilter) Matches(event map[string]interface{}) (map[string]interfac
 		matchedFields[path] = valueStr
 	}
 
-	return matchedFields, nil
+	matchedErrorFields := make(map[string]interface{})
+	for path, regex := range f.ErrorRules {
+		value, err := lookup.LookupString(event, path)
+		if err != nil {
+			return nil, errorf("lookup error: %s", err)
+		}
+
+		valueStr := fmt.Sprintf("%v", value.Interface())
+		if !regex.MatchString(valueStr) {
+			matchedErrorFields = nil
+			break
+		}
+
+		matchedErrorFields[path] = valueStr
+	}
+
+	return &MatchResult{
+		MatchedFields:      matchedFields,
+		MatchedErrorFields: matchedErrorFields,
+	}, nil
 }
 
 func (f *EventFilter) String() string {

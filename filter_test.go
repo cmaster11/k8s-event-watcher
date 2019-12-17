@@ -14,6 +14,8 @@ rules:
   involvedObject.name: test.*
   type: Warning
   reason: BackoffLimitExceeded
+errorRules:
+  type: "^W.*"
 `
 
 	filter := &EventFilter{}
@@ -41,15 +43,22 @@ rules:
 		t.Fatalf("failed to cast event to map: %s", err)
 	}
 
-	matchedFields, err := filter.Matches(obj)
+	matchResult, err := filter.Matches(obj)
 	if err != nil {
 		t.Fatalf("match error: %s", err)
 	}
-	if matchedFields == nil {
+	if matchResult == nil {
 		t.Fatalf("no match")
 	}
-	if matchedFields["involvedObject.name"] != evt.InvolvedObject.Name {
+	if matchResult.MatchedFields["involvedObject.name"] != evt.InvolvedObject.Name {
 		t.Fatalf("bad matched field")
+	}
+
+	if len(matchResult.MatchedErrorFields) == 0 {
+		t.Fatalf("no error matched")
+	}
+	if matchResult.MatchedErrorFields["type"] != evt.Type {
+		t.Fatalf("bad matched error field")
 	}
 
 	output := filter.ToYAML()

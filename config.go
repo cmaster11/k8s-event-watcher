@@ -28,14 +28,14 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func (c *Config) MatchingEventFilter(event map[string]interface{}) (*EventFilter, map[string]interface{}, error) {
+func (c *Config) MatchingEventFilter(event map[string]interface{}) (*EventFilter, *MatchResult, error) {
 	for _, filter := range c.Filters {
-		matchedFields, err := filter.Matches(event)
+		matchResult, err := filter.Matches(event)
 		if err != nil {
 			return nil, nil, errorf("error matching filter: %s", err)
 		}
-		if matchedFields != nil {
-			return filter, matchedFields, nil
+		if matchResult != nil {
+			return filter, matchResult, nil
 		}
 	}
 
