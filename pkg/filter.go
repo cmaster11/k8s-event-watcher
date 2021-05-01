@@ -1,21 +1,21 @@
-package k8seventwatcher
+package pkg
 
 import (
 	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/cmaster11/k8s-event-watcher/lookup"
+	"github.com/mcuadros/go-lookup"
 	"gopkg.in/yaml.v2"
 )
 
 type EventFilter struct {
 
 	// Rules used to match the event
-	Rules map[string]*Regexp `yaml:"rules"`
+	Rules map[string]*Regexp `mapstructure:"rules" yaml:"rules" json:"rules"`
 
-	// If all these rules match, the event is considered an Overseer error
-	ErrorRules map[string]*Regexp `yaml:"errorRules"`
+	// If all these rules match, the event is considered an error
+	ErrorRules map[string]*Regexp `mapstructure:"errorRules" yaml:"errorRules" json:"errorRules"`
 }
 
 func (f *EventFilter) Validate() error {
@@ -28,8 +28,8 @@ func (f *EventFilter) Validate() error {
 }
 
 type MatchResult struct {
-	MatchedFields      map[string]interface{}
-	MatchedErrorFields map[string]interface{}
+	MatchedFields      map[string]interface{} `yaml:"matchedFields" json:"matchedFields"`
+	MatchedErrorFields map[string]interface{} `yaml:"matchedErrorFields" json:"matchedErrorFields"`
 }
 
 func (f *EventFilter) Matches(event map[string]interface{}) (*MatchResult, error) {
@@ -37,7 +37,7 @@ func (f *EventFilter) Matches(event map[string]interface{}) (*MatchResult, error
 	for path, regex := range f.Rules {
 		value, err := lookup.LookupString(event, path)
 		if err != nil {
-			return nil, errorf("lookup error: %s", err)
+			return nil, fmt.Errorf("lookup error: %s", err)
 		}
 
 		valueStr := fmt.Sprintf("%v", value.Interface())
@@ -52,7 +52,7 @@ func (f *EventFilter) Matches(event map[string]interface{}) (*MatchResult, error
 	for path, regex := range f.ErrorRules {
 		value, err := lookup.LookupString(event, path)
 		if err != nil {
-			return nil, errorf("lookup error: %s", err)
+			return nil, fmt.Errorf("lookup error: %s", err)
 		}
 
 		valueStr := fmt.Sprintf("%v", value.Interface())

@@ -1,9 +1,10 @@
-package k8seventwatcher
+package pkg
 
 import (
+	"testing"
+
 	"gopkg.in/yaml.v2"
 	"k8s.io/api/core/v1"
-	"testing"
 )
 
 func TestEventFilter(t *testing.T) {

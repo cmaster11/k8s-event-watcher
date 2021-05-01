@@ -1,4 +1,4 @@
-package k8seventwatcher
+package pkg
 
 import "testing"
 

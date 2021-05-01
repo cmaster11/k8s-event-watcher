@@ -1,0 +1,18 @@
+sinceNow: true
+filters:
+- rules:
+    involvedObject.kind: Job
+    involvedObject.name: "^*.fail"
+    reason: BackoffLimitExceeded
+  errorRules:
+    # In this specific case, we want to mark this event ALWAYS as an error
+    type: .*
+
+webhooks:
+
+  # This webhook uses Notify17 to generate a notification on error (https://notify17.net)
+  #
+  # Replace with your Notify17 template API key
+  - url: https://hook.notify17.net/api/template/TEMPLATE_API_KEY
+    headers:
+      x-my-header: hello
