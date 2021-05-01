@@ -1,16 +1,16 @@
-package k8seventwatcher
+package pkg
 
 import (
-	"log"
+	"fmt"
 
 	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
-	Filters []*EventFilter `yaml:"filters"`
+	Filters []*EventFilter `mapstructure:"filters" yaml:"filters"`
 
 	// If true, accepts only events generated since the app has been launched
-	SinceNow bool `yaml:"sinceNow"`
+	SinceNow bool `mapstructure:"sinceNow" yaml:"sinceNow"`
 }
 
 func (c *Config) Validate() error {
@@ -32,7 +32,7 @@ func (c *Config) MatchingEventFilter(event map[string]interface{}) (*EventFilter
 	for _, filter := range c.Filters {
 		matchResult, err := filter.Matches(event)
 		if err != nil {
-			return nil, nil, errorf("error matching filter: %s", err)
+			return nil, nil, fmt.Errorf("error matching filter: %w", err)
 		}
 		if matchResult != nil {
 			return filter, matchResult, nil

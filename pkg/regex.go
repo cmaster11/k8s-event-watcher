@@ -1,8 +1,12 @@
-package k8seventwatcher
+package pkg
 
 import (
+	"encoding/json"
+	"reflect"
 	"regexp"
 	"strings"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 type Regexp struct {
@@ -54,6 +58,10 @@ func (r *Regexp) MarshalYAML() (interface{}, error) {
 	return r.String(), nil
 }
 
+func (r *Regexp) MarshalJSON() ([]byte, error) {
+	return json.Marshal(r.String())
+}
+
 func (r *Regexp) String() string {
 	regexString := r.regex.String()
 
@@ -72,4 +80,27 @@ func (r *Regexp) MatchString(value string) bool {
 	}
 
 	return matches
+}
+
+// StringToRegexHookFunc decode hook used by mapstructure
+func StringToRegexHookFunc() mapstructure.DecodeHookFuncType {
+	return func(
+		f reflect.Type,
+		t reflect.Type,
+		data interface{}) (interface{}, error) {
+		if f.Kind() != reflect.String {
+			return data, nil
+		}
+		if t != reflect.TypeOf((*Regexp)(nil)) {
+			return data, nil
+		}
+
+		str := data.(string)
+
+		if str == "" {
+			return nil, nil
+		}
+
+		return NewRegexp(str)
+	}
 }

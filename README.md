@@ -1,6 +1,6 @@
 # k8s-event-watcher
 
-This library lets you watch for Kubernetes events, and triggers a callback whenever one matching the criteria is found.
+This library lets you watch for Kubernetes events, and triggers a callback whenever one event matching the criteria is found.
 
 An example of configuration is:
 
@@ -65,3 +65,7 @@ kubectl apply -f ./example/job-fail-k8s.yaml
 ```
 
 The example program will then pick up the failure and show the matching event.
+
+## Webhook sender
+
+You can also use the webhook sender application (`./cmd/webhook`) to trigger a webhook whenever an event is matched.

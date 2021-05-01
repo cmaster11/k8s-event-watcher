@@ -1,13 +1,12 @@
-package k8seventwatcher
+package pkg
 
 import (
+	"fmt"
 	"io"
-	"io/ioutil"
-	"log"
 	"sync"
 	"time"
 
-	"gopkg.in/yaml.v2"
+	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
@@ -18,10 +17,11 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+var log = logrus.StandardLogger()
+
 type K8sEventWatcher struct {
 	config     *Config
 	launchTime v12.Time
-	logger     *log.Logger
 
 	kubeInformerFactory informers.SharedInformerFactory
 
@@ -33,62 +33,42 @@ type K8sEventWatcher struct {
 }
 
 func NewK8sEventWatcher(
-	// Config path of event watcher
-	configPath string,
+	// Config of event watcher
+	config *Config,
 	// Config path for k8s cluster, can be empty
 	kubeConfigPath *string,
 	logWriter io.Writer,
 ) (*K8sEventWatcher, error) {
-	if configPath == "" {
-		return nil, errorf("empty config path provided")
-	}
-
-	configData, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		return nil, errorf("failed to read config file: %v", err)
-	}
-
-	config := &Config{}
-	err = yaml.Unmarshal(configData, config)
-	if err != nil {
-		return nil, errorf("failed to unmarshal config: %v", err)
-	}
+	var err error
 
 	if err := config.Validate(); err != nil {
-		return nil, errorf("invalid config: %v", err)
+		return nil, fmt.Errorf("invalid config: %w", err)
 	}
 
 	var k8sConfig *rest.Config
 	if kubeConfigPath != nil {
 		k8sConfig, err = clientcmd.BuildConfigFromFlags("", *kubeConfigPath)
 		if err != nil {
-			return nil, errorf("failed to build k8s config: %v", err)
+			return nil, fmt.Errorf("failed to build k8s config: %w", err)
 		}
 	} else {
 		k8sConfig, err = rest.InClusterConfig()
 		if err != nil {
-			return nil, errorf("failed to build in-cluster k8s config: %v", err)
+			return nil, fmt.Errorf("failed to build in-cluster k8s config: %w", err)
 		}
 	}
 	clientSet, err := kubernetes.NewForConfig(k8sConfig)
 	if err != nil {
-		return nil, errorf("failed to initialize k8s client: %v", err)
+		return nil, fmt.Errorf("failed to initialize k8s client: %w", err)
 	}
 
 	launchTime := v12.Now()
 	kubeInformerFactory := informers.NewSharedInformerFactory(clientSet, time.Second*30)
 	evtInformer := kubeInformerFactory.Core().V1().Events().Informer()
 
-	var logger *log.Logger
-
-	if logWriter != nil {
-		logger = log.New(logWriter, "", log.LstdFlags)
-	}
-
 	watcher := &K8sEventWatcher{
 		config:              config,
 		launchTime:          launchTime,
-		logger:              logger,
 		kubeInformerFactory: kubeInformerFactory,
 	}
 
@@ -102,55 +82,53 @@ func NewK8sEventWatcher(
 func (w *K8sEventWatcher) onAddEvent(obj interface{}) {
 	evt, ok := obj.(*v1.Event)
 	if !ok {
-		w.logEntryError("failed to cast event: %+v", obj)
+		log.WithField("object", obj).Errorf("failed to cast event")
 		return
 	}
 
 	if w.config.SinceNow && evt.CreationTimestamp.Before(&w.launchTime) {
 		// Old event
-		w.logEntryDebug("discarded old event: %+v", evt)
+		log.WithField("event", evt).Debug("discarded old event")
 		return
 	}
 
 	// Convert the event to a map
 	outMap, err := eventToMap(evt)
 	if err != nil {
-		w.logEntryError("failed to cast event to map: %+v", err)
+		log.WithError(err).Error("failed to cast event to map")
 		return
 	}
 
 	filter, matchResult, err := w.config.MatchingEventFilter(outMap)
 	if err != nil {
-		w.logEntryError("failed to find matching event filter: %+v", err)
+		log.WithError(err).Error("failed to find matching event filter")
 		return
 	}
 	if filter != nil {
-		w.logEntryDebug("matched event: %+v", evt)
+		log.WithField("event", evt).Debug("matched event")
 		w.callback(evt, filter, matchResult)
 		return
 	}
 
-	w.logEntryDebug("discarded event: %+v", evt)
+	log.WithField("event", evt).Debug("discarded event")
 }
 
 func (w *K8sEventWatcher) Start(callback func(event *v1.Event, eventFilter *EventFilter, matchResult *MatchResult)) error {
 	if callback == nil {
-		return errorf("callback cannot be null")
+		return fmt.Errorf("callback cannot be null")
 	}
 
 	w.lock.Lock()
 	defer w.lock.Unlock()
 
 	if w.chStop != nil {
-		return errorf("already started")
+		return fmt.Errorf("already started")
 	}
 
 	w.callback = callback
 	w.chStop = make(chan struct{})
 
 	go w.kubeInformerFactory.Start(w.chStop)
-
-	w.logEntryInfo("started (%s) with config:\n%s", w.launchTime.String(), w.config.Dump())
 
 	return nil
 }
@@ -165,4 +143,8 @@ func (w *K8sEventWatcher) Stop() {
 
 	close(w.chStop)
 	w.chStop = nil
+}
+
+func (w *K8sEventWatcher) LaunchTime() v12.Time {
+	return w.launchTime
 }

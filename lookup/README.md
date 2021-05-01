@@ -1,1 +1,0 @@
-This folder contains a direct copy of https://github.com/mcuadros/go-lookup.
